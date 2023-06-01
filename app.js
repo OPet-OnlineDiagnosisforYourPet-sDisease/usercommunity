@@ -5,7 +5,7 @@ const mysql = require('mysql');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const port = 3000;
+const port = 8080;
 
 // Konfigurasi koneksi MySQL
 const connection = mysql.createConnection({
