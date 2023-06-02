@@ -110,7 +110,7 @@ app.post('/login', (req, res) => {
 // Endpoint untuk menambahkan story baru
 app.post('/stories', verifyToken, (req, res) => {
     // Mengambil data dari body request
-    const { description, lat, lon } = req.body;
+    const { description } = req.body;
 
     // Melakukan validasi file gambar
     if (!req.files || !req.files.photo) {
@@ -131,12 +131,24 @@ app.post('/stories', verifyToken, (req, res) => {
         }
 
         // Menyimpan informasi story ke database
-        connection.query('INSERT INTO stories (description, photo, lat, lon) VALUES (?, ?, ?, ?)', [description, fileName, lat, lon], (err, result) => {
+        let query = 'INSERT INTO stories (description, photo';
+        let values = [description, fileName];
+
+        // Cek apakah lat dan lon ada dalam body request
+        if (req.body.lat && req.body.lon) {
+            query += ', lat, lon)';
+            values.push(req.body.lat, req.body.lon);
+        } else {
+            query += ')';
+        }
+
+        connection.query(query + ' VALUES (?, ?, ?, ?)', values, (err, result) => {
             if (err) throw err;
             return res.status(201).json({ message: 'Story added successfully', error: false });
         });
     });
 });
+
 
 // Endpoint untuk mendapatkan semua stories
 app.get('/stories', verifyToken, (req, res) => {
