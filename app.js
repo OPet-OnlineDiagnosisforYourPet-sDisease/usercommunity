@@ -56,7 +56,7 @@ app.post('/register', (req, res) => {
 
     // Validasi panjang password
     if (password.length < 8) {
-        return res.status(200).json({ message: 'Password must be at least 8 characters' });
+        return res.status(200).json({ message: 'Password must be at least 8 characters', error: true });
     }
 
     // Cek apakah email sudah terdaftar
@@ -65,7 +65,7 @@ app.post('/register', (req, res) => {
 
         // Jika email sudah terdaftar
         if (results.length > 0) {
-            return res.status(200).json({ message: 'Email already exists' });
+            return res.status(200).json({ message: 'Email already exists', error: false });
         }
 
         // Jika email belum terdaftar, lakukan registrasi
@@ -76,7 +76,7 @@ app.post('/register', (req, res) => {
             const user = { email };
             const token = generateToken(user);
             
-            return res.status(201).json({ message: 'Registration successful'});
+            return res.status(201).json({ message: 'Registration successful', error: false});
         });
     });
 });
@@ -98,11 +98,11 @@ app.post('/login', (req, res) => {
             const user = { email };
             const token = generateToken(user);
             
-            return res.status(200).json({ message: 'Login successful', loginResult: { email, username: name, token }});
+            return res.status(200).json({ message: 'Login successful', error: false, loginResult: { email, username: name, token }});
         }
 
         // Jika email dan password tidak cocok
-        return res.status(200).json({ message: 'Invalid email or password' });
+        return res.status(200).json({ message: 'Invalid email or password', error: true });
     });
 });
 
@@ -133,7 +133,7 @@ app.post('/stories', verifyToken, (req, res) => {
         // Menyimpan informasi story ke database
         connection.query('INSERT INTO stories (description, photo, lat, lon) VALUES (?, ?, ?, ?)', [description, fileName, lat, lon], (err, result) => {
             if (err) throw err;
-            return res.status(201).json({ message: 'Story added successfully' });
+            return res.status(201).json({ message: 'Story added successfully', error: false });
         });
     });
 });
