@@ -65,7 +65,7 @@ app.post('/register', (req, res) => {
 
         // Jika email sudah terdaftar
         if (results.length > 0) {
-            return res.status(200).json({ message: 'Email already exists', error: false });
+            return res.status(200).json({ message: 'Email already exists', error: true });
         }
 
         // Jika email belum terdaftar, lakukan registrasi
