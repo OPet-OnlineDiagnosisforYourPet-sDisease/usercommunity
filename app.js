@@ -9,10 +9,10 @@ const port = 8080;
 
 // Konfigurasi koneksi MySQL
 const connection = mysql.createConnection({
-    host: '35.222.154.226', // Ganti dengan host MySQL Anda
-    user: 'root', // Ganti dengan username MySQL Anda
-    password: 'rahman552', // Ganti dengan password MySQL Anda
-    database: 'database_usercommunity' // Ganti dengan nama database MySQL Anda
+    host: '35.222.154.226', 
+    user: 'root', 
+    password: 'rahman552', 
+    database: 'database_usercommunity' 
 });
 
 connection.connect((err) => {
@@ -56,7 +56,7 @@ app.post('/register', (req, res) => {
 
     // Validasi panjang password
     if (password.length < 8) {
-        return res.status(400).json({ message: 'Password must be at least 8 characters' });
+        return res.status(200).json({ message: 'Password must be at least 8 characters' });
     }
 
     // Cek apakah email sudah terdaftar
@@ -65,7 +65,7 @@ app.post('/register', (req, res) => {
 
         // Jika email sudah terdaftar
         if (results.length > 0) {
-            return res.status(409).json({ message: 'Email already exists' });
+            return res.status(200).json({ message: 'Email already exists' });
         }
 
         // Jika email belum terdaftar, lakukan registrasi
@@ -99,7 +99,7 @@ app.post('/login', (req, res) => {
         }
 
         // Jika email dan password tidak cocok
-        return res.status(401).json({ message: 'Invalid email or password' });
+        return res.status(200).json({ message: 'Invalid email or password' });
     });
 });
 
@@ -110,7 +110,7 @@ app.post('/stories', verifyToken, (req, res) => {
 
     // Melakukan validasi file gambar
     if (!req.files || !req.files.photo) {
-        return res.status(400).json({ message: 'Please provide a valid image file' });
+        return res.status(200).json({ message: 'Please provide a valid image file' });
     }
 
     // Mendapatkan file foto
