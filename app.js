@@ -114,7 +114,7 @@ app.post('/stories', verifyToken, (req, res) => {
 
     // Melakukan validasi file gambar
     if (!req.files || !req.files.photo) {
-        return res.status(200).json({ message: 'Please provide a valid image file' });
+        return res.status(200).json({ message: 'Please provide a valid image file', error: true });
     }
 
     // Mendapatkan file foto
