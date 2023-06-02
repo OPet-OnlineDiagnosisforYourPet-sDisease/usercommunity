@@ -24,8 +24,8 @@ connection.connect((err) => {
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 
-// Middleware untuk verifikasi token
-function verifyToken(req, res, next) {
+// Middleware untuk mengotorisasi permintaan
+function authorizeRequest(req, res, next) {
     const token = req.headers['authorization'];
 
     if (!token) {
@@ -151,7 +151,7 @@ app.post('/stories', verifyToken, (req, res) => {
 
 
 // Endpoint untuk mendapatkan semua stories
-app.get('/stories', verifyToken, (req, res) => {
+app.get('/stories', authorizeRequest, (req, res) => {
     const { page, size, location } = req.query;
 
     // Memeriksa parameter location (1 untuk mendapatkan stories dengan lokasi, 0 untuk semua stories)
