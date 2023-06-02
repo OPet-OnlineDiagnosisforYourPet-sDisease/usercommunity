@@ -98,7 +98,7 @@ app.post('/login', (req, res) => {
             const user = { email };
             const token = generateToken(user);
             
-            return res.status(200).json({ message: 'Login successful', email, username: name, token });
+            return res.status(200).json({ message: 'Login successful', loginResult: { email, username: name, token }});
         }
 
         // Jika email dan password tidak cocok
