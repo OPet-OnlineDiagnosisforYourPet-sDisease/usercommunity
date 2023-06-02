@@ -74,8 +74,9 @@ app.post('/register', (req, res) => {
             
             // Generate token JWT
             const user = { email };
+            const token = generateToken(user);
             
-            return res.status(201).json({ message: 'Registration successful', token });
+            return res.status(201).json({ message: 'Registration successful'});
         });
     });
 });
