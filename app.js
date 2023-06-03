@@ -138,23 +138,9 @@ app.post('/stories', verifyToken, (req, res) => {
 });
 
 // Endpoint untuk mendapatkan semua stories
-app.get('/stories', verifyToken, (req, res) => {
-    const { page, size, location } = req.query;
-
-    // Memeriksa parameter location (1 untuk mendapatkan stories dengan lokasi, 0 untuk semua stories)
-    let query = 'SELECT * FROM stories';
-    if (location === '1') {
-        // Jika parameter location = 1, tambahkan kondisi untuk mendapatkan stories dengan lokasi
-        query += ' WHERE lat IS NOT NULL AND lon IS NOT NULL';
-    }
-
-    // Menambahkan paging
-    const offset = (page - 1) * size;
-    query += ` LIMIT ${size} OFFSET ${offset}`;
-
-    // Menjalankan query untuk mendapatkan stories
-    connection.query(query, (err, results) => {
-        if (err) throw err;
+app.get('/stories', (req, res) => {
+    connection.query('SELECT * FROM stories', (error, results) => {
+        if (error) throw error;
         return res.status(200).json({ stories: results });
     });
 });
