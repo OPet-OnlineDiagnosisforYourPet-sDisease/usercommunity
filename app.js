@@ -9,10 +9,10 @@ const port = 8080;
 
 // Konfigurasi koneksi MySQL
 const connection = mysql.createConnection({
-    host: '35.222.154.226', 
-    user: 'root', 
-    password: 'rahman552', 
-    database: 'database_usercommunity' 
+    host: '35.222.154.226', // Ganti dengan host MySQL Anda
+    user: 'root', // Ganti dengan username MySQL Anda
+    password: 'rahman552', // Ganti dengan password MySQL Anda
+    database: 'database_usercommunity' // Ganti dengan nama database MySQL Anda
 });
 
 connection.connect((err) => {
@@ -24,8 +24,8 @@ connection.connect((err) => {
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 
-// Middleware untuk mengotorisasi permintaan
-function authorizeRequest(req, res, next) {
+// Middleware untuk verifikasi token
+function verifyToken(req, res, next) {
     const token = req.headers['authorization'];
 
     if (!token) {
@@ -56,7 +56,7 @@ app.post('/register', (req, res) => {
 
     // Validasi panjang password
     if (password.length < 8) {
-        return res.status(200).json({ message: 'Password must be at least 8 characters', error: true });
+        return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
 
     // Cek apakah email sudah terdaftar
@@ -65,7 +65,7 @@ app.post('/register', (req, res) => {
 
         // Jika email sudah terdaftar
         if (results.length > 0) {
-            return res.status(200).json({ message: 'Email already exists', error: true });
+            return res.status(409).json({ message: 'Email already exists' });
         }
 
         // Jika email belum terdaftar, lakukan registrasi
@@ -76,7 +76,7 @@ app.post('/register', (req, res) => {
             const user = { email };
             const token = generateToken(user);
             
-            return res.status(201).json({ message: 'Registration successful', error: false});
+            return res.status(201).json({ message: 'Registration successful', token });
         });
     });
 });
@@ -91,30 +91,26 @@ app.post('/login', (req, res) => {
 
         // Jika email dan password cocok
         if (results.length > 0) {
-            // Mengambil email dan username pengguna
-            const { email, name } = results[0];
-
             // Generate token JWT
             const user = { email };
             const token = generateToken(user);
             
-            return res.status(200).json({ message: 'Login successful', error: false, loginResult: { email, username: name, token }});
+            return res.status(200).json({ message: 'Login successful', token });
         }
 
         // Jika email dan password tidak cocok
-        return res.status(200).json({ message: 'Invalid email or password', error: true });
+        return res.status(401).json({ message: 'Invalid email or password' });
     });
 });
-
 
 // Endpoint untuk menambahkan story baru
 app.post('/stories', verifyToken, (req, res) => {
     // Mengambil data dari body request
-    const { description } = req.body;
+    const { description, lat, lon } = req.body;
 
     // Melakukan validasi file gambar
     if (!req.files || !req.files.photo) {
-        return res.status(200).json({ message: 'Please provide a valid image file', error: true });
+        return res.status(400).json({ message: 'Please provide a valid image file' });
     }
 
     // Mendapatkan file foto
@@ -131,27 +127,15 @@ app.post('/stories', verifyToken, (req, res) => {
         }
 
         // Menyimpan informasi story ke database
-        let query = 'INSERT INTO stories (description, photo';
-        let values = [description, fileName];
-
-        // Cek apakah lat dan lon ada dalam body request
-        if (req.body.lat && req.body.lon) {
-            query += ', lat, lon)';
-            values.push(req.body.lat, req.body.lon);
-        } else {
-            query += ')';
-        }
-
-        connection.query(query + ' VALUES (?, ?, ?, ?)', values, (err, result) => {
+        connection.query('INSERT INTO stories (description, photo, lat, lon) VALUES (?, ?, ?, ?)', [description, fileName, lat, lon], (err, result) => {
             if (err) throw err;
-            return res.status(201).json({ message: 'Story added successfully', error: false });
+            return res.status(201).json({ message: 'Story added successfully' });
         });
     });
 });
 
-
 // Endpoint untuk mendapatkan semua stories
-app.get('/stories', authorizeRequest, (req, res) => {
+app.get('/stories', verifyToken, (req, res) => {
     const { page, size, location } = req.query;
 
     // Memeriksa parameter location (1 untuk mendapatkan stories dengan lokasi, 0 untuk semua stories)
