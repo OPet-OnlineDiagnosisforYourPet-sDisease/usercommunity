@@ -137,8 +137,13 @@ app.post('/stories', verifyToken, (req, res) => {
     });
 });
 
-// Endpoint untuk mendapatkan semua stories
+// Endpoint untuk mendapatkan semua stories dengan pagination
 app.get('/stories', (req, res) => {
+    const { page, limit } = req.query;
+    const pageNumber = parseInt(page) || 1;
+    const limitNumber = parseInt(limit) || 50;
+    const offset = (pageNumber - 1) * limitNumber;
+
     const { location } = req.query;
     let query = 'SELECT * FROM stories';
 
@@ -148,9 +153,26 @@ app.get('/stories', (req, res) => {
 
     connection.query(query, (error, results) => {
         if (error) throw error;
-        return res.status(200).json({ stories: results });
+
+        const totalCount = results.length;
+        const totalPages = Math.ceil(totalCount / limitNumber);
+
+        // Mengambil data stories dengan paging
+        connection.query(`${query} LIMIT ${limitNumber} OFFSET ${offset}`, (error, results) => {
+            if (error) throw error;
+
+            return res.status(200).json({
+                stories: results,
+                pagination: {
+                    total: totalCount,
+                    totalPages: totalPages,
+                    currentPage: pageNumber
+                }
+            });
+        });
     });
 });
+
 
 // Jalankan server
 app.listen(port, () => {
