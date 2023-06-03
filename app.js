@@ -139,10 +139,10 @@ app.post('/stories', verifyToken, (req, res) => {
 
 // Endpoint untuk mendapatkan semua stories dengan pagination
 app.get('/stories', (req, res) => {
-    const { page, limit } = req.query;
+    const { page, size } = req.query;
     const pageNumber = parseInt(page) || 1;
-    const limitNumber = parseInt(limit) || 50;
-    const offset = (pageNumber - 1) * limitNumber;
+    const pageSize = parseInt(size) || 50;
+    const offset = (pageNumber - 1) * pageSize;
 
     const { location } = req.query;
     let query = 'SELECT * FROM stories';
@@ -155,14 +155,18 @@ app.get('/stories', (req, res) => {
         if (error) throw error;
 
         const totalCount = results.length;
-        const totalPages = Math.ceil(totalCount / limitNumber);
+        const totalPages = Math.ceil(totalCount / pageSize);
 
         // Mengambil data stories dengan paging
-        connection.query(`${query} LIMIT ${limitNumber} OFFSET ${offset}`, (error, results) => {
+        connection.query(`${query} LIMIT ${pageSize} OFFSET ${offset}`, (error, results) => {
             if (error) throw error;
 
             return res.status(200).json({
                 stories: results,
+                page: pageNumber,
+                size: pageSize,
+                total_pages: totalPages,
+                total_count: totalCount,
             });
         });
     });
