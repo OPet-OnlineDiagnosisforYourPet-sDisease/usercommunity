@@ -163,11 +163,6 @@ app.get('/stories', (req, res) => {
 
             return res.status(200).json({
                 stories: results,
-                pagination: {
-                    total: totalCount,
-                    totalPages: totalPages,
-                    currentPage: pageNumber
-                }
             });
         });
     });
