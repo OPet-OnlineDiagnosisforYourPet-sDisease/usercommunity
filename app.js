@@ -9,10 +9,10 @@ const port = 8080;
 
 // Konfigurasi koneksi MySQL
 const connection = mysql.createConnection({
-    host: '35.222.154.226', // Ganti dengan host MySQL Anda
-    user: 'root', // Ganti dengan username MySQL Anda
-    password: 'rahman552', // Ganti dengan password MySQL Anda
-    database: 'database_usercommunity' // Ganti dengan nama database MySQL Anda
+    host: '35.222.154.226', 
+    user: 'root', 
+    password: 'rahman552', 
+    database: 'database_usercommunity' 
 });
 
 connection.connect((err) => {
@@ -24,8 +24,8 @@ connection.connect((err) => {
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 
-// Middleware untuk verifikasi token
-function verifyToken(req, res, next) {
+// Middleware untuk mengotorisasi permintaan
+function authorizeRequest(req, res, next) {
     const token = req.headers['authorization'];
 
     if (!token) {
@@ -56,7 +56,7 @@ app.post('/register', (req, res) => {
 
     // Validasi panjang password
     if (password.length < 8) {
-        return res.status(400).json({ message: 'Password must be at least 8 characters' });
+        return res.status(200).json({ message: 'Password must be at least 8 characters', error: true });
     }
 
     // Cek apakah email sudah terdaftar
@@ -65,7 +65,7 @@ app.post('/register', (req, res) => {
 
         // Jika email sudah terdaftar
         if (results.length > 0) {
-            return res.status(409).json({ message: 'Email already exists' });
+            return res.status(200).json({ message: 'Email already exists', error: true });
         }
 
         // Jika email belum terdaftar, lakukan registrasi
@@ -76,7 +76,7 @@ app.post('/register', (req, res) => {
             const user = { email };
             const token = generateToken(user);
             
-            return res.status(201).json({ message: 'Registration successful', token });
+            return res.status(201).json({ message: 'Registration successful', error: false});
         });
     });
 });
@@ -91,15 +91,18 @@ app.post('/login', (req, res) => {
 
         // Jika email dan password cocok
         if (results.length > 0) {
+            // Mengambil email dan username pengguna
+            const { email, name } = results[0];
+
             // Generate token JWT
             const user = { email };
             const token = generateToken(user);
             
-            return res.status(200).json({ message: 'Login successful', token });
+            return res.status(200).json({ message: 'Login successful', error: false, loginResult: { email, username: name, token }});
         }
 
         // Jika email dan password tidak cocok
-        return res.status(401).json({ message: 'Invalid email or password' });
+        return res.status(200).json({ message: 'Invalid email or password', error: true });
     });
 });
 
