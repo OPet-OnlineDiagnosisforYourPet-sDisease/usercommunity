@@ -139,7 +139,14 @@ app.post('/stories', verifyToken, (req, res) => {
 
 // Endpoint untuk mendapatkan semua stories
 app.get('/stories', (req, res) => {
-    connection.query('SELECT * FROM stories', (error, results) => {
+    const { location } = req.query;
+    let query = 'SELECT * FROM stories';
+
+    if (location && location === '1') {
+        query = 'SELECT * FROM stories WHERE lat IS NOT NULL AND lon IS NOT NULL';
+    }
+
+    connection.query(query, (error, results) => {
         if (error) throw error;
         return res.status(200).json({ stories: results });
     });
