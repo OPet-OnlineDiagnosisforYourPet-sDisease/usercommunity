@@ -162,11 +162,9 @@ app.get('/stories', (req, res) => {
             if (error) throw error;
 
             return res.status(200).json({
-                stories: results,
-                page: pageNumber,
-                size: pageSize,
-                total_pages: totalPages,
-                total_count: totalCount,
+                error: false,
+                message: "Stories berhasil didapatkan",
+                stories: results
             });
         });
     });
