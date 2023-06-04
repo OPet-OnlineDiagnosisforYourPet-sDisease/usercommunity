@@ -230,7 +230,7 @@ app.get('/stories', (req, res) => {
             return res.status(200).json({
                 error: false,
                 message: 'Stories berhasil didapatkan',
-                stories: formattedResults,
+                stories: formattedResults
             });
         });
     });
