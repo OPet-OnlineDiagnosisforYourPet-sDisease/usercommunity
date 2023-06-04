@@ -14,7 +14,7 @@ const connection = mysql.createConnection({
     host: '35.222.154.226', // Ganti dengan host MySQL Anda
     user: 'root', // Ganti dengan username MySQL Anda
     password: 'rahman552', // Ganti dengan password MySQL Anda
-    database: 'database_usercommunity', // Ganti dengan nama database MySQL Anda
+    database: 'database_usercommunity' // Ganti dengan nama database MySQL Anda
 });
 
 connection.connect((err) => {
