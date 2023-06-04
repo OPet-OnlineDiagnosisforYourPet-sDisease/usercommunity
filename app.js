@@ -25,7 +25,7 @@ connection.connect((err) => {
 // Konfigurasi Google Cloud Storage
 const storage = new Storage({
     keyFilename: 'service_account.json', // Ganti dengan nama file kunci GCP Anda
-    projectId: 'opet-app', // Ganti dengan ID proyek Google Cloud Anda
+    projectId: 'opet-app' // Ganti dengan ID proyek Google Cloud Anda
 });
 
 // Middleware untuk mengurai body request dalam format x-www-form-urlencoded
@@ -53,7 +53,7 @@ function verifyToken(req, res, next) {
 // Fungsi untuk menghasilkan token JWT
 function generateToken(user) {
     const payload = {
-        email: user.email,
+        email: user.email
     };
     return jwt.sign(payload, 'secret-key');
 }
