@@ -14,7 +14,7 @@ const connection = mysql.createConnection({
     host: '35.222.154.226', // Ganti dengan host MySQL Anda
     user: 'root', // Ganti dengan username MySQL Anda
     password: 'rahman552', // Ganti dengan password MySQL Anda
-    database: 'database_usercommunity' // Ganti dengan nama database MySQL Anda
+    database: 'database_usercommunity', // Ganti dengan nama database MySQL Anda
 });
 
 connection.connect((err) => {
@@ -25,7 +25,7 @@ connection.connect((err) => {
 // Konfigurasi Google Cloud Storage
 const storage = new Storage({
     keyFilename: 'service_account.json', // Ganti dengan nama file kunci GCP Anda
-    projectId: 'opet-app' // Ganti dengan ID proyek Google Cloud Anda
+    projectId: 'opet-app', // Ganti dengan ID proyek Google Cloud Anda
 });
 
 // Middleware untuk mengurai body request dalam format x-www-form-urlencoded
@@ -53,7 +53,7 @@ function verifyToken(req, res, next) {
 // Fungsi untuk menghasilkan token JWT
 function generateToken(user) {
     const payload = {
-        email: user.email
+        email: user.email,
     };
     return jwt.sign(payload, 'secret-key');
 }
@@ -163,18 +163,19 @@ app.post('/stories', verifyToken, (req, res) => {
 
             const fileUrl = `https://storage.googleapis.com/${bucketName}/${fileName}`;
 
-            // Mendapatkan waktu saat ini sesuai zona waktu pengguna
-            const userTime = moment().tz('Asia/Jakarta').format();
-
             // Menyimpan informasi foto ke tabel photo
             connection.query(
                 'INSERT INTO photo (file_name, file_url) VALUES (?, ?)', [fileName, fileUrl],
                 (err, result) => {
                     if (err) throw err;
 
+                    // Mendapatkan waktu saat ini sesuai zona waktu pengguna
+                    const userTime = moment().tz('Asia/Jakarta').format('YYYY-MM-DD HH:mm:ss');
+
+
                     // Menyimpan informasi story ke database
                     connection.query(
-                        'INSERT INTO stories (description, photo, lat, lon, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?)', [description, fileUrl, lat, lon, req.decoded.email, moment().tz('Asia/Jakarta').format('YYYY-MM-DD HH:mm:ss')],
+                        'INSERT INTO stories (description, photo, lat, lon, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?)', [description, fileUrl, lat, lon, req.decoded.email, userTime],
                         (err, result) => {
                             if (err) throw err;
                             res.status(201).json({ message: 'Story added successfully', error: false });
@@ -230,7 +231,7 @@ app.get('/stories', (req, res) => {
             return res.status(200).json({
                 error: false,
                 message: 'Stories berhasil didapatkan',
-                stories: formattedResults
+                stories: formattedResults,
             });
         });
     });
