@@ -238,7 +238,7 @@ app.get('/stories', (req, res) => {
 
     const { location } = req.query;
     let query =
-        'SELECT stories.*, users.name AS sender_name FROM stories JOIN users ON stories.user_id = users.email';
+        'SELECT stories.*, users.name AS sender_name, users.profil AS sender_profil FROM stories JOIN users ON stories.user_id = users.email';
 
     if (location && location === '1') {
         query += ' WHERE stories.lat IS NOT NULL AND stories.lon IS NOT NULL';
