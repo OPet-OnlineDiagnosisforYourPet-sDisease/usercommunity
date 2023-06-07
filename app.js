@@ -7,7 +7,7 @@ const { Storage } = require('@google-cloud/storage');
 const moment = require('moment-timezone');
 
 const app = express();
-const port = 8080;
+const port = 8000;
 
 // Konfigurasi koneksi MySQL
 const connection = mysql.createConnection({
@@ -182,6 +182,47 @@ app.post('/stories', verifyToken, (req, res) => {
                         }
                     );
 
+                }
+            );
+        });
+    });
+});
+
+// Endpoint untuk mengunggah foto profil
+app.post('/profile/photo', verifyToken, (req, res) => {
+    if (!req.files || !req.files.profilePhoto) {
+        return res.status(200).json({ message: 'Please provide a valid image file', error: true });
+    }
+
+    const { profilePhoto } = req.files;
+
+    const fileName = profilePhoto.name;
+
+    const bucketName = 'photoprofil'; // Ganti dengan nama bucket Google Cloud Storage Anda
+    const bucket = storage.bucket(bucketName);
+    const file = bucket.file(fileName);
+
+    profilePhoto.mv(`./photos/${fileName}`, (err) => {
+        if (err) {
+            console.error(err);
+            return res.status(200).json({ message: 'Failed to upload profile photo', error: true });
+        }
+
+        bucket.upload(`./photos/${fileName}`, (err, uploadedFile) => {
+            if (err) {
+                console.error(err);
+                return res.status(200).json({ message: 'Failed to upload profile photo', error: true });
+            }
+
+            const fileUrl = `https://storage.googleapis.com/${bucketName}/${fileName}`;
+
+            // Menyimpan informasi foto profil ke database
+            connection.query(
+                'UPDATE users SET profil = ? WHERE email = ?', [fileUrl, req.decoded.email],
+                (err, result) => {
+                    if (err) throw err;
+
+                    res.status(200).json({ message: 'Profile photo uploaded successfully', error: false });
                 }
             );
         });
