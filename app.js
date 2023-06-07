@@ -108,7 +108,7 @@ app.post('/login', (req, res) => {
             // Jika email dan password cocok
             if (results.length > 0) {
                 // Mengambil email dan username pengguna
-                const { email, name } = results[0];
+                const { email, name, profil } = results[0];
 
                 // Generate token JWT
                 const user = { email };
@@ -117,7 +117,7 @@ app.post('/login', (req, res) => {
                 return res.status(200).json({
                     message: 'Login successful',
                     error: false,
-                    loginResult: { email, username: name, token },
+                    loginResult: { email, username: name, profil, token },
                 });
             }
 
