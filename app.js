@@ -221,8 +221,9 @@ app.post('/profile/photo', verifyToken, (req, res) => {
                 'UPDATE users SET profil = ? WHERE email = ?', [fileUrl, req.decoded.email],
                 (err, result) => {
                     if (err) throw err;
+                    const profil = result[0].profil;
 
-                    res.status(200).json({ message: 'Profile photo uploaded successfully', error: false });
+                    res.status(200).json({ message: 'Profile photo uploaded successfully', error: false, profil });
                 }
             );
         });
