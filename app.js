@@ -318,37 +318,56 @@ app.get('/storieslike', verifyToken, (req, res) => {
     });
 });
 
-// Endpoint untuk mendapatkan story berdasarkan ID
 app.get('/stories/:id', (req, res) => {
     const storyId = req.params.id;
 
     // Mengambil data story dari database berdasarkan ID
     connection.query(
-        'SELECT stories.*, users.name AS sender_name, users.profil AS sender_profil FROM stories JOIN users ON stories.user_id = users.email WHERE stories.id = ?', [storyId],
+        'SELECT stories.*, users.name AS sender_name, users.profil AS sender_profil, COUNT(likes.id) AS like_count FROM stories JOIN users ON stories.user_id = users.email LEFT JOIN likes ON stories.id = likes.story_id WHERE stories.id = ? GROUP BY stories.id', [storyId],
         (error, results) => {
             if (error) throw error;
 
             if (results.length > 0) {
+                const story = results[0];
                 const formattedResult = {
-                    ...results[0],
-                    created_at: moment.utc(results[0].created_at).tz('Asia/Jakarta').format('MMM D, YYYY, h:mm:ss A'),
+                    ...story,
+                    created_at: moment.utc(story.created_at).tz('Asia/Jakarta').format('MMM D, YYYY, h:mm:ss A'),
                 };
 
+                // Mengambil data komentar dari database berdasarkan story_id
+                connection.query(
+                    'SELECT comments.*, users.name AS commenter_name FROM comments JOIN users ON comments.user_email = users.email WHERE comments.story_id = ?', [storyId],
+                    (error, commentResults) => {
+                        if (error) throw error;
+
+                        const comments = commentResults.map(comment => ({
+                            id: comment.id,
+                            story_id: comment.story_id,
+                            user_email: comment.user_email,
+                            comment: comment.comment,
+                            commenter_name: comment.commenter_name,
+                        }));
+
+                        formattedResult.comments = comments;
+
+                        return res.status(200).json({
+                            error: false,
+                            message: 'Story berhasil didapatkan',
+                            story: formattedResult,
+                        });
+                    }
+                );
+            } else {
                 return res.status(200).json({
-                    error: false,
-                    message: 'Story berhasil didapatkan',
-                    story: formattedResult,
+                    error: true,
+                    message: 'Story tidak ditemukan',
+                    story: null,
                 });
             }
-
-            return res.status(200).json({
-                error: true,
-                message: 'Story tidak ditemukan',
-                story: null,
-            });
         }
     );
 });
+
 
 // Endpoint untuk memberikan like pada story
 app.post('/stories/:id/like', verifyToken, (req, res) => {
