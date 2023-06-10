@@ -224,7 +224,7 @@ app.get('/stories', (req, res) => {
 
     const { location } = req.query;
     let query =
-        'SELECT stories.*, users.name AS sender_name, users.profil AS sender_profil FROM stories JOIN users ON stories.user_id = users.email';
+        'SELECT stories.*, users.name AS sender_name, users.profil AS sender_profil, COUNT(likes.id) AS like_count FROM stories JOIN users ON stories.user_id = users.email LEFT JOIN likes ON stories.id = likes.story_id';
 
     if (location && location === '1') {
         query += ' WHERE stories.lat IS NOT NULL AND stories.lon IS NOT NULL';
@@ -235,7 +235,7 @@ app.get('/stories', (req, res) => {
     }
 
     // Menambahkan pengurutan berdasarkan ID secara descending
-    query += ' ORDER BY stories.id DESC';
+    query += ' GROUP BY stories.id ORDER BY stories.id DESC';
 
     connection.query(query, (error, results) => {
         if (error) throw error;
@@ -263,6 +263,7 @@ app.get('/stories', (req, res) => {
         });
     });
 });
+
 
 // Endpoint untuk mendapatkan semua stories melihat like berdasarkan token login
 app.get('/storieslike', verifyToken, (req, res) => {
