@@ -293,7 +293,6 @@ app.get('/stories', (req, res) => {
 // Endpoint untuk menampilkan stories berdasarkan id stories
 app.get('/stories/:id', (req, res) => {
     const storyId = req.params.id;
-
     // Mengambil data story dari database berdasarkan ID
     connection.query(
         'SELECT stories.*, users.name AS sender_name, users.profil AS sender_profil  FROM stories JOIN users ON stories.user_id = users.email WHERE stories.id = ? GROUP BY stories.id', [storyId],
@@ -302,10 +301,11 @@ app.get('/stories/:id', (req, res) => {
 
             if (results.length > 0) {
                 const story = results[0];
-                const formattedResult = {
-                    ...story,
-                    created_at: moment.utc(story.created_at).tz('Asia/Jakarta').format('MMM D, YYYY, h:mm:ss A'),
-                };
+                const formattedResults = results.map(result => ({
+                    ...result,
+                    created_at: moment(result.created_at).tz('Asia/Jakarta').format('MMM D, YYYY, h:mm:ss A')
+                }));
+
 
                 // Mengambil jumlah komentar dari database berdasarkan story_id
                 connection.query(
@@ -317,7 +317,7 @@ app.get('/stories/:id', (req, res) => {
 
                         // Mengambil data komentar dari database berdasarkan story_id
                         connection.query(
-                            'SELECT comments.*, users.name AS commenter_name, users.profil AS commenter_profil, DATE_FORMAT(comments.created_at, "%Y-%m-%d %H:%i:%s") AS comment_time FROM comments JOIN users ON comments.user_email = users.email WHERE comments.story_id = ?', [storyId],
+                            'SELECT comments.*, users.name AS commenter_name, users.profil AS commenter_profil, comments.created_at AS comment_time FROM comments JOIN users ON comments.user_email = users.email WHERE comments.story_id = ? ORDER BY comments.created_at', [storyId],
                             (error, commentResults) => {
                                 if (error) throw error;
 
@@ -331,14 +331,14 @@ app.get('/stories/:id', (req, res) => {
                                     comment_time: moment.utc(comment.comment_time).tz('Asia/Jakarta').format('MMM D, YYYY, h:mm:ss A'),
                                 }));
 
-                                formattedResult.comments = comments;
-                                formattedResult.comment_count = commentCount;
-                                formattedResult.user_profile = story.sender_profil;
+                                formattedResults[0].comments = comments;
+                                formattedResults[0].comment_count = commentCount;
+                                formattedResults[0].user_profile = story.sender_profil;
 
                                 return res.status(200).json({
                                     error: false,
                                     message: 'Story berhasil didapatkan',
-                                    story: formattedResult,
+                                    story: formattedResults[0],
                                     user_profile: story.sender_profil, // Tambahkan foto profil pengguna
                                 });
                             }
@@ -355,6 +355,8 @@ app.get('/stories/:id', (req, res) => {
         }
     );
 });
+
+
 
 
 // Endpoint untuk memberikan komentar pada story
