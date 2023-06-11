@@ -270,7 +270,7 @@ app.get('/stories/:id', (req, res) => {
 
     // Mengambil data story dari database berdasarkan ID
     connection.query(
-        'SELECT stories.*, users.name AS sender_name, users.profil AS sender_profil, COUNT(likes.id) AS like_count FROM stories JOIN users ON stories.user_id = users.email WHERE stories.id = ? GROUP BY stories.id', [storyId],
+        'SELECT stories.*, users.name AS sender_name, users.profil AS sender_profil  FROM stories JOIN users ON stories.user_id = users.email WHERE stories.id = ? GROUP BY stories.id', [storyId],
         (error, results) => {
             if (error) throw error;
 
@@ -281,31 +281,42 @@ app.get('/stories/:id', (req, res) => {
                     created_at: moment.utc(story.created_at).tz('Asia/Jakarta').format('MMM D, YYYY, h:mm:ss A'),
                 };
 
-                // Mengambil data komentar dari database berdasarkan story_id
+                // Mengambil jumlah komentar dari database berdasarkan story_id
                 connection.query(
-                    'SELECT comments.*, users.name AS commenter_name, users.profil AS commenter_profil, DATE_FORMAT(comments.created_at, "%Y-%m-%d %H:%i:%s") AS comment_time FROM comments JOIN users ON comments.user_email = users.email WHERE comments.story_id = ?', [storyId],
-                    (error, commentResults) => {
+                    'SELECT COUNT(*) AS comment_count FROM comments WHERE story_id = ?', [storyId],
+                    (error, commentCountResult) => {
                         if (error) throw error;
 
-                        const comments = commentResults.map((comment) => ({
-                            id: comment.id,
-                            story_id: comment.story_id,
-                            user_email: comment.user_email,
-                            comment: comment.comment,
-                            commenter_name: comment.commenter_name,
-                            commenter_profil: comment.commenter_profil,
-                            comment_time: moment.utc(comment.comment_time).tz('Asia/Jakarta').format('MMM D, YYYY, h:mm:ss A'),
-                        }));
+                        const commentCount = commentCountResult[0].comment_count;
 
-                        formattedResult.comments = comments;
-                        formattedResult.user_profile = story.sender_profil;
+                        // Mengambil data komentar dari database berdasarkan story_id
+                        connection.query(
+                            'SELECT comments.*, users.name AS commenter_name, users.profil AS commenter_profil, DATE_FORMAT(comments.created_at, "%Y-%m-%d %H:%i:%s") AS comment_time FROM comments JOIN users ON comments.user_email = users.email WHERE comments.story_id = ?', [storyId],
+                            (error, commentResults) => {
+                                if (error) throw error;
 
-                        return res.status(200).json({
-                            error: false,
-                            message: 'Story berhasil didapatkan',
-                            story: formattedResult,
-                            user_profile: story.sender_profil, // Tambahkan foto profil pengguna
-                        });
+                                const comments = commentResults.map((comment) => ({
+                                    id: comment.id,
+                                    story_id: comment.story_id,
+                                    user_email: comment.user_email,
+                                    comment: comment.comment,
+                                    commenter_name: comment.commenter_name,
+                                    commenter_profil: comment.commenter_profil,
+                                    comment_time: moment.utc(comment.comment_time).tz('Asia/Jakarta').format('MMM D, YYYY, h:mm:ss A'),
+                                }));
+
+                                formattedResult.comments = comments;
+                                formattedResult.comment_count = commentCount;
+                                formattedResult.user_profile = story.sender_profil;
+
+                                return res.status(200).json({
+                                    error: false,
+                                    message: 'Story berhasil didapatkan',
+                                    story: formattedResult,
+                                    user_profile: story.sender_profil, // Tambahkan foto profil pengguna
+                                });
+                            }
+                        );
                     }
                 );
             } else {
@@ -318,6 +329,7 @@ app.get('/stories/:id', (req, res) => {
         }
     );
 });
+
 
 // Endpoint untuk memberikan komentar pada story
 app.post('/stories/:id/comment', verifyToken, (req, res) => {
