@@ -200,20 +200,22 @@ app.post('/profile/photo', verifyToken, (req, res) => {
                 return res.status(200).json({ message: 'Failed to upload profile photo', error: true });
             }
 
-            const fileUrl = `https://storage.googleapis.com/${bucketName}/${fileName}`;
+            const profil = `https://storage.googleapis.com/${bucketName}/${fileName}`;
 
             // Menyimpan informasi foto profil ke database
             connection.query(
-                'UPDATE users SET profil = ? WHERE email = ?', [fileUrl, req.decoded.email],
+                'UPDATE users SET profil = ? WHERE email = ?', [profil, req.decoded.email],
                 (err, result) => {
                     if (err) throw err;
 
-                    res.status(200).json({ message: 'Profile photo uploaded successfully', error: false });
+                    res.status(200).json({ message: 'Profile photo uploaded successfully', profil, error: false });
                 }
             );
         });
     });
 });
+
+
 
 // Endpoint untuk mendapatkan semua stories dengan pagination
 app.get('/stories', (req, res) => {
