@@ -216,7 +216,6 @@ app.post('/profile/photo', verifyToken, (req, res) => {
 });
 
 
-
 // Endpoint untuk mendapatkan semua stories dengan pagination
 app.get('/stories', (req, res) => {
     const { page, size, email } = req.query;
@@ -257,11 +256,36 @@ app.get('/stories', (req, res) => {
                 created_at: moment.utc(result.created_at).tz('Asia/Jakarta').format('MMM D, YYYY, h:mm:ss A')
             }));
 
-            return res.status(200).json({
-                error: false,
-                message: 'Stories berhasil didapatkan',
-                stories: formattedResults,
+            const promises = formattedResults.map(formattedResult => {
+                return new Promise((resolve, reject) => {
+                    const storyId = formattedResult.id;
+
+                    // Mengambil jumlah komentar dari database berdasarkan story_id
+                    connection.query(
+                        'SELECT COUNT(*) AS comment_count FROM comments WHERE story_id = ?', [storyId],
+                        (error, commentCountResult) => {
+                            if (error) reject(error);
+
+                            const commentCount = commentCountResult[0].comment_count;
+                            formattedResult.comment_count = commentCount;
+
+                            resolve();
+                        }
+                    );
+                });
             });
+
+            Promise.all(promises)
+                .then(() => {
+                    return res.status(200).json({
+                        error: false,
+                        message: 'Stories berhasil didapatkan',
+                        stories: formattedResults,
+                    });
+                })
+                .catch((error) => {
+                    throw error;
+                });
         });
     });
 });
