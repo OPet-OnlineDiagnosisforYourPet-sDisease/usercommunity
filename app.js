@@ -264,68 +264,13 @@ app.get('/stories', (req, res) => {
     });
 });
 
-
-// Endpoint untuk mendapatkan semua stories melihat like berdasarkan token login
-app.get('/storieslike', verifyToken, (req, res) => {
-    const { page, size, email } = req.query;
-    const pageNumber = parseInt(page) || 1;
-    const pageSize = parseInt(size) || 50;
-    const offset = (pageNumber - 1) * pageSize;
-    const userTokenEmail = req.decoded.email;
-
-    const { location } = req.query;
-    let query =
-        'SELECT stories.*, users.name AS sender_name, users.profil AS sender_profil, COUNT(likes.id) AS like_count, ' +
-        'IF(likes.user_id = ?, "true", "false") AS liked_by_user ' + // Menggunakan fungsi IF untuk menghasilkan nilai "true" atau "false" dalam bentuk string
-        'FROM stories ' +
-        'JOIN users ON stories.user_id = users.email ' +
-        'LEFT JOIN likes ON stories.id = likes.story_id';
-
-    if (location && location === '1') {
-        query += ' WHERE stories.lat IS NOT NULL AND stories.lon IS NOT NULL';
-    }
-
-    if (email) {
-        query += ` WHERE users.email = '${email}'`;
-    }
-
-    // Menambahkan pengurutan berdasarkan ID secara descending
-    query += ' GROUP BY stories.id, likes.user_id ORDER BY stories.id DESC';
-
-    connection.query(query, [userTokenEmail], (error, results) => {
-        if (error) throw error;
-
-        const totalCount = results.length;
-        const totalPages = Math.ceil(totalCount / pageSize);
-
-        // Mengambil data stories dengan paging
-        query += ` LIMIT ${pageSize} OFFSET ${offset}`;
-
-        connection.query(query, [userTokenEmail], (error, results) => {
-            if (error) throw error;
-
-            // Ubah format waktu menjadi waktu Indonesia
-            const formattedResults = results.map((result) => ({
-                ...result,
-                created_at: moment.utc(result.created_at).tz('Asia/Jakarta').format('MMM D, YYYY, h:mm:ss A'),
-            }));
-
-            return res.status(200).json({
-                error: false,
-                message: 'Stories berhasil didapatkan',
-                stories: formattedResults,
-            });
-        });
-    });
-});
-
 // Endpoint untuk menampilkan stories berdasarkan id stories
 app.get('/stories/:id', (req, res) => {
     const storyId = req.params.id;
 
     // Mengambil data story dari database berdasarkan ID
     connection.query(
-        'SELECT stories.*, users.name AS sender_name, users.profil AS sender_profil, COUNT(likes.id) AS like_count FROM stories JOIN users ON stories.user_id = users.email LEFT JOIN likes ON stories.id = likes.story_id WHERE stories.id = ? GROUP BY stories.id', [storyId],
+        'SELECT stories.*, users.name AS sender_name, users.profil AS sender_profil, COUNT(likes.id) AS like_count FROM stories JOIN users ON stories.user_id = users.email WHERE stories.id = ? GROUP BY stories.id', [storyId],
         (error, results) => {
             if (error) throw error;
 
@@ -370,54 +315,6 @@ app.get('/stories/:id', (req, res) => {
                     story: null,
                 });
             }
-        }
-    );
-});
-
-
-
-
-// Endpoint untuk memberikan like pada story
-app.post('/stories/:id/like', verifyToken, (req, res) => {
-    const storyId = req.params.id;
-    const userEmail = req.decoded.email;
-
-    // Cek apakah pengguna sudah memberikan like pada story tersebut
-    connection.query(
-        'SELECT * FROM likes WHERE story_id = ? AND user_id = ?', [storyId, userEmail],
-        (error, results) => {
-            if (error) throw error;
-
-            // Jika sudah ada data like, kembalikan pesan error
-            if (results.length > 0) {
-                return res.status(200).json({ message: 'You have already liked this story', error: true });
-            }
-
-            // Menambahkan data like baru ke database
-            connection.query(
-                'INSERT INTO likes (story_id, user_id) VALUES (?, ?)', [storyId, userEmail],
-                (err, result) => {
-                    if (err) throw err;
-
-                    return res.status(200).json({ message: 'Like added successfully', error: false });
-                }
-            );
-        }
-    );
-});
-
-// Endpoint untuk menghapus like pada story
-app.delete('/stories/:id/like', verifyToken, (req, res) => {
-    const storyId = req.params.id;
-    const userEmail = req.decoded.email;
-
-    // Menghapus data like dari database
-    connection.query(
-        'DELETE FROM likes WHERE story_id = ? AND user_id = ?', [storyId, userEmail],
-        (err, result) => {
-            if (err) throw err;
-
-            return res.status(200).json({ message: 'Like removed successfully', error: false });
         }
     );
 });
