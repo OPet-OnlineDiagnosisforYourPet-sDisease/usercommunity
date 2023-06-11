@@ -7,7 +7,7 @@ const { Storage } = require('@google-cloud/storage');
 const moment = require('moment-timezone');
 
 const app = express();
-const port = 8080;
+const port = 8000;
 
 // Konfigurasi koneksi MySQL
 const connection = mysql.createConnection({
@@ -319,6 +319,7 @@ app.get('/storieslike', verifyToken, (req, res) => {
     });
 });
 
+// Endpoint untuk menampilkan stories berdasarkan id stories
 app.get('/stories/:id', (req, res) => {
     const storyId = req.params.id;
 
@@ -337,24 +338,28 @@ app.get('/stories/:id', (req, res) => {
 
                 // Mengambil data komentar dari database berdasarkan story_id
                 connection.query(
-                    'SELECT comments.*, users.name AS commenter_name FROM comments JOIN users ON comments.user_email = users.email WHERE comments.story_id = ?', [storyId],
+                    'SELECT comments.*, users.name AS commenter_name, users.profil AS commenter_profil, DATE_FORMAT(comments.created_at, "%Y-%m-%d %H:%i:%s") AS comment_time FROM comments JOIN users ON comments.user_email = users.email WHERE comments.story_id = ?', [storyId],
                     (error, commentResults) => {
                         if (error) throw error;
 
-                        const comments = commentResults.map(comment => ({
+                        const comments = commentResults.map((comment) => ({
                             id: comment.id,
                             story_id: comment.story_id,
                             user_email: comment.user_email,
                             comment: comment.comment,
                             commenter_name: comment.commenter_name,
+                            commenter_profil: comment.commenter_profil,
+                            comment_time: moment.utc(comment.comment_time).tz('Asia/Jakarta').format('MMM D, YYYY, h:mm:ss A'),
                         }));
 
                         formattedResult.comments = comments;
+                        formattedResult.user_profile = story.sender_profil;
 
                         return res.status(200).json({
                             error: false,
                             message: 'Story berhasil didapatkan',
                             story: formattedResult,
+                            user_profile: story.sender_profil, // Tambahkan foto profil pengguna
                         });
                     }
                 );
@@ -368,6 +373,8 @@ app.get('/stories/:id', (req, res) => {
         }
     );
 });
+
+
 
 
 // Endpoint untuk memberikan like pada story
@@ -420,10 +427,11 @@ app.post('/stories/:id/comment', verifyToken, (req, res) => {
     const storyId = req.params.id;
     const { comment } = req.body;
     const userEmail = req.decoded.email;
+    const userTime = moment().tz('Asia/Jakarta').format('YYYY-MM-DD HH:mm:ss'); // Mengambil waktu saat ini sesuai zona waktu pengguna
 
     // Menyimpan komentar ke database
     connection.query(
-        'INSERT INTO comments (story_id, user_email, comment) VALUES (?, ?, ?)', [storyId, userEmail, comment],
+        'INSERT INTO comments (story_id, user_email, comment, created_at) VALUES (?, ?, ?, ?)', [storyId, userEmail, comment, userTime],
         (err, result) => {
             if (err) throw err;
 
@@ -431,6 +439,7 @@ app.post('/stories/:id/comment', verifyToken, (req, res) => {
         }
     );
 });
+
 
 // Endpoint untuk menghapus komentar pada story
 app.delete('/stories/:id/comment/:commentId', verifyToken, (req, res) => {
