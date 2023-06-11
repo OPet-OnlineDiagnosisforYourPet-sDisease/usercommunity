@@ -7,7 +7,7 @@ const { Storage } = require('@google-cloud/storage');
 const moment = require('moment-timezone');
 
 const app = express();
-const port = 8000;
+const port = 8080;
 
 // Konfigurasi koneksi MySQL
 const connection = mysql.createConnection({
