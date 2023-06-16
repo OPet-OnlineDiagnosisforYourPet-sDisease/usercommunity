@@ -750,7 +750,8 @@
   POST
 # Headers
   Content-Type: multipart/form-data
-  Authorization: (token)
+  Authorization: (token)  
+# Request Body
   Key: comment
   Value: Isi komentar
 # Response
