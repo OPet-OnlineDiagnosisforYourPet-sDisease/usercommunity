@@ -48,6 +48,11 @@
         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InJvemkxMjNAZ21haWwuY29tIiwiaWF0IjoxNjg2OTE4MDMzfQ.UUVQQM_xCxe9_K3pd9hu7z2B62AHTgEQuFsVENcI2_o"
     }
 # }
+# Ex: Jika email atau password salah
+# {
+    "message": "Invalid email or password",
+    "error": true
+# }
 
 # Ubah Foto Profil
 # URL
@@ -746,6 +751,8 @@
 # Headers
   Content-Type: multipart/form-data
   Authorization: (token)
+  Key: comment
+  Value: Isi komentar
 # Response
 # {
     "message": "Comment added successfully",
